@@ -58,7 +58,8 @@ names:
         lr0=0.002,       # ❗調降初始學習率
         project=str(save_dir),
         name="exp_patch",
-        exist_ok=True
+        exist_ok=True,
+        accumulate=2
     )
 
     # ✅ 訓練後釋放資源
