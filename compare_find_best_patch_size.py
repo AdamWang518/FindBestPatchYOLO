@@ -9,14 +9,14 @@ import torch
 import cv2
 import matplotlib.pyplot as plt
 
-# ─────────── 設定區 ───────────
+# ───────────── 設定區 ─────────────
 PATCH_SIZES = [320, 480, 640, 800, 960]
 VAL_IMG_DIR = Path("./val/images")
 VAL_LBL_DIR = Path("./val/labels")
 WORK_DIR    = Path("./CompareResults")
 CLASS_NAMES = ['ship', 'aquaculture cage', 'buoy']
 CONF_THRES, IOU_THRES, EDGE_THRES = 0.5, 0.5, 5
-# ─────────────────────────────
+# ────────────────────────────
 
 def xywhn_to_xyxy(box):
     x, y, w, h = box
@@ -106,6 +106,7 @@ def infer_patch(model, img_dir, out_dir, crop_size):
 
     files = sorted([p.name for p in img_dir.iterdir() if p.suffix.lower() in ['.jpg', '.png']])
     total_time = 0.0
+    max_mem = 0
 
     for fname in tqdm(files, desc=f"Patch {crop_size}", ncols=100):
         img = cv2.imread(str(img_dir / fname))
@@ -113,6 +114,10 @@ def infer_patch(model, img_dir, out_dir, crop_size):
         h, w = img.shape[:2]
         all_boxes = []
         start = time.time()
+
+        if torch.cuda.is_available():
+            torch.cuda.reset_peak_memory_stats()
+
         for r in range((h + crop_size - 1) // crop_size):
             for c in range((w + crop_size - 1) // crop_size):
                 x0, y0 = c * crop_size, r * crop_size
@@ -124,9 +129,14 @@ def infer_patch(model, img_dir, out_dir, crop_size):
                         cls = int(b.cls)
                         x, y, bw, bh = b.xywh[0].tolist()
                         all_boxes.append([cls, x0 + x, y0 + y, bw, bh, b.conf.item()])
+
         total_time += time.time() - start
 
-        # NMS
+        if torch.cuda.is_available():
+            mem = torch.cuda.max_memory_allocated() / 1024**2
+            max_mem = max(max_mem, mem)
+
+        # NMS + 合併略，保留原程式碼一致性
         nms_boxes = []
         for cls in set(b[0] for b in all_boxes):
             cls_boxes = [b for b in all_boxes if b[0] == cls]
@@ -142,12 +152,12 @@ def infer_patch(model, img_dir, out_dir, crop_size):
             "\n".join(f"{c} {x:.6f} {y:.6f} {w:.6f} {h:.6f}" for c,x,y,w,h in final)
         )
 
-    return total_time, files
+    return total_time, max_mem, files
 
-# ─────────── 主流程 ───────────
+# ──────── 主程序 ────────
 if __name__ == "__main__":
     WORK_DIR.mkdir(exist_ok=True)
-    all_recall, all_prec, all_f1, all_time = {}, {}, {}, {}
+    all_recall, all_prec, all_f1, all_time, all_mem = {}, {}, {}, {}, {}
 
     for size in PATCH_SIZES:
         model_path = Path(f"./runs_patch_{size}/exp_patch/weights/best.pt")
@@ -155,7 +165,7 @@ if __name__ == "__main__":
         model = YOLO(str(model_path))
 
         out_dir = WORK_DIR / f"output_patch_{size}"
-        infer_time, file_list = infer_patch(model, VAL_IMG_DIR, out_dir, size)
+        infer_time, max_mem, file_list = infer_patch(model, VAL_IMG_DIR, out_dir, size)
         recall, prec = evaluate(out_dir/"labels", VAL_LBL_DIR, file_list, len(CLASS_NAMES))
         f1 = [2*r*p/(r+p) if (r+p) > 0 else 0 for r, p in zip(recall, prec)]
 
@@ -163,13 +173,14 @@ if __name__ == "__main__":
         all_prec[size]   = sum(prec)   / len(CLASS_NAMES)
         all_f1[size]     = sum(f1)     / len(CLASS_NAMES)
         all_time[size]   = infer_time
+        all_mem[size]    = max_mem
 
     csv_path = WORK_DIR / "compare_patch_sizes.csv"
     with open(csv_path, "w") as f:
-        f.write("PatchSize,Recall,Precision,F1,Time(s)\n")
+        f.write("PatchSize,Recall,Precision,F1,Time(s),MaxMemory(MB)\n")
         for s in PATCH_SIZES:
-            f.write(f"{s},{all_recall[s]:.4f},{all_prec[s]:.4f},{all_f1[s]:.4f},{all_time[s]:.2f}\n")
-    print("✅ compare_patch_sizes.csv 已儲存")
+            f.write(f"{s},{all_recall[s]:.4f},{all_prec[s]:.4f},{all_f1[s]:.4f},{all_time[s]:.2f},{all_mem[s]:.1f}\n")
+    print("\u2705 compare_patch_sizes.csv 已儲存")
 
     def plot_metric(metric_dict, title, fname):
         plt.figure(figsize=(8,5))
@@ -185,5 +196,6 @@ if __name__ == "__main__":
     plot_metric(all_recall, "Average Recall", "recall_patch_sizes.png")
     plot_metric(all_prec,   "Average Precision", "precision_patch_sizes.png")
     plot_metric(all_f1,     "Average F1-score", "f1_patch_sizes.png")
+    plot_metric(all_mem,    "Max GPU Memory (MB)", "memory_patch_sizes.png")
 
-    print("🎉 所有 patch size 模型比較已完成！")
+    print("\ud83c\udf89 所有 patch size 模型比較已完成！")
