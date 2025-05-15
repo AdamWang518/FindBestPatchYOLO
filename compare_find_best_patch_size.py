@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import gc  # 為了釋放 GPU 資源
 
 # ───────────── 設定區 ─────────────
-PATCH_SIZES = [320, 480, 640, 800, 960]
+PATCH_SIZES = [320, 480, 640, 800]
 VAL_IMG_DIR = Path("./val/images")
 VAL_LBL_DIR = Path("./val/labels")
 WORK_DIR    = Path("./CompareResults")
