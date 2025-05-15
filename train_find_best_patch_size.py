@@ -4,12 +4,12 @@ from pathlib import Path
 
 # ✅ 設定參數區
 PATCH_SIZES = [320, 480, 640, 800, 960]
-ROOT_DIR = Path(r"../RandomPick_v6_Train_Patched")  # ⚠️ 改這裡
+ROOT_DIR = Path("../RandomPick_v6_Train_Patched")  # 相對於執行目錄
 SAVE_DIR = Path("runs_patch_{size}")
-MODEL_ARCH = "yolo11n.pt"  
+MODEL_ARCH = "yolo11n.pt"
 EPOCHS = 12
 BATCH_SIZE = 16
-DEVICE = 0  # 改成 'cpu' 或指定 GPU 編號
+DEVICE = 0  # GPU 編號或 "cpu"
 
 CLASS_NAMES = [
     "ship",
@@ -23,17 +23,18 @@ for size in PATCH_SIZES:
     yaml_path = dataset_path / "data.yaml"
     save_dir = SAVE_DIR.with_name(f"runs_patch_{size}")
 
-    # ⬇️ 自動產生 YAML
-    yaml_content = f"""\n\
-train: {dataset_path.as_posix()}/train/images
-val: {dataset_path.as_posix()}/val/images
+    # ⬇️ 自動產生 YAML，使用絕對路徑
+    abs_dataset_path = dataset_path.resolve().as_posix()
+    yaml_content = f"""\
+train: {abs_dataset_path}/train/images
+val: {abs_dataset_path}/val/images
 
 nc: {len(CLASS_NAMES)}
 names:
 """
     for name in CLASS_NAMES:
         yaml_content += f"  - {name}\n"
-    
+
     yaml_path.write_text(yaml_content, encoding="utf-8")
 
     # ⬇️ 執行訓練
