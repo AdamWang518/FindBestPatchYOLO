@@ -3,7 +3,8 @@ from ultralytics import YOLO
 from pathlib import Path
 
 # ✅ 設定參數區
-PATCH_SIZES = [320, 480, 640, 800, 960]
+# PATCH_SIZES = [320, 480, 640, 800, 960]
+PATCH_SIZES = [ 480, 640, 800, 960]
 ROOT_DIR = Path("../RandomPick_v6_Train_Patched")
 SAVE_DIR = Path("runs_patch_{size}")
 MODEL_ARCH = "yolo11n.pt"
