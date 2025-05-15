@@ -4,12 +4,12 @@ from pathlib import Path
 
 # ✅ 設定參數區
 PATCH_SIZES = [320, 480, 640, 800, 960]
-ROOT_DIR = Path("../RandomPick_v6_Train_Patched")  # 相對於執行目錄
+ROOT_DIR = Path("../RandomPick_v6_Train_Patched")
 SAVE_DIR = Path("runs_patch_{size}")
 MODEL_ARCH = "yolo11n.pt"
 EPOCHS = 12
 BATCH_SIZE = 16
-DEVICE = 0  # GPU 編號或 "cpu"
+DEVICE = 0  # 或 "cpu"
 
 CLASS_NAMES = [
     "ship",
@@ -23,7 +23,7 @@ for size in PATCH_SIZES:
     yaml_path = dataset_path / "data.yaml"
     save_dir = SAVE_DIR.with_name(f"runs_patch_{size}")
 
-    # ⬇️ 自動產生 YAML，使用絕對路徑
+    # ⬇️ 自動產生 YAML（使用絕對路徑）
     abs_dataset_path = dataset_path.resolve().as_posix()
     yaml_content = f"""\
 train: {abs_dataset_path}/train/images
@@ -50,6 +50,9 @@ names:
         batch=BATCH_SIZE,
         imgsz=size,
         device=DEVICE,
+        amp=False,       # ❗關閉混合精度避免 NaN
+        lr0=0.002,       # ❗調降初始學習率
+        clip=1.0,        # ❗啟用 gradient clipping
         project=str(save_dir),
         name="exp_patch",
         exist_ok=True
