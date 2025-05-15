@@ -113,8 +113,12 @@ def infer_patch(model, img_dir, out_dir, crop_size):
         if torch.cuda.is_available():
             torch.cuda.reset_peak_memory_stats()
 
-        for r in range((h + crop_size - 1) // crop_size):
-            for c in range((w + crop_size - 1) // crop_size):
+        # ✅ 無 overlap + ceil 切法（如 generate）
+        rows = (h + crop_size - 1) // crop_size
+        cols = (w + crop_size - 1) // crop_size
+
+        for r in range(rows):
+            for c in range(cols):
                 x0, y0 = c * crop_size, r * crop_size
                 x1, y1 = min(x0 + crop_size, w), min(y0 + crop_size, h)
                 patch = img[y0:y1, x0:x1]
@@ -130,22 +134,29 @@ def infer_patch(model, img_dir, out_dir, crop_size):
             mem = torch.cuda.max_memory_allocated() / 1024**2
             max_mem = max(max_mem, mem)
 
+                # ── 每類別 NMS ──
         nms_boxes = []
         for cls in set(b[0] for b in all_boxes):
             cls_boxes = [b for b in all_boxes if b[0] == cls]
-            xyxy = torch.tensor([[b[1]-b[3]/2, b[2]-b[4]/2, b[1]+b[3]/2, b[2]+b[4]/2] for b in cls_boxes])
+            xyxy  = torch.tensor([[b[1]-b[3]/2, b[2]-b[4]/2,
+                                   b[1]+b[3]/2, b[2]+b[4]/2] for b in cls_boxes])
             confs = torch.tensor([b[5] for b in cls_boxes])
-            keep = nms(xyxy, confs, IOU_THRES)
+            keep  = nms(xyxy, confs, IOU_THRES)
             nms_boxes.extend([cls_boxes[i] for i in keep])
 
+        # ✅ 重新啟用「跨 patch 邊界合併」── 關鍵 2 行
         merged = merge_boxes_across_patches(nms_boxes, crop_size, crop_size, w, h)
-        final = [[b[0], b[1]/w, b[2]/h, b[3]/w, b[4]/h] for b in merged]
+        final  = [[b[0], b[1]/w, b[2]/h, b[3]/w, b[4]/h] for b in merged]
 
         (out_lbl / f"{Path(fname).stem}.txt").write_text(
-            "\n".join(f"{c} {x:.6f} {y:.6f} {w:.6f} {h:.6f}" for c,x,y,w,h in final)
+            "\n".join(f"{c} {x:.6f} {y:.6f} {bw:.6f} {bh:.6f}"
+                      for c, x, y, bw, bh in final)
         )
 
+
     return total_time, max_mem, files
+
+
 
 # ──────── 主程序 ────────
 if __name__ == "__main__":
