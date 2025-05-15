@@ -6,12 +6,13 @@ from pathlib import Path
 
 # PATCH_SIZES = [320, 480, 640, 800, 960]
 # ✅ 設定參數區
-PATCH_SIZES = [480, 640, 800, 960]
+# PATCH_SIZES = [480, 640, 800, 960]
+PATCH_SIZES = [960]
 ROOT_DIR = Path("../RandomPick_v6_Train_Patched")
 SAVE_DIR = Path("runs_patch_{size}")
 MODEL_ARCH = "yolo11n.pt"
 EPOCHS = 12
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 DEVICE = 0  # 或 "cpu"
 
 CLASS_NAMES = [
