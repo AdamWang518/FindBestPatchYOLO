@@ -6,7 +6,7 @@ from pathlib import Path
 PATCH_SIZES = [320, 480, 640, 800, 960]
 ROOT_DIR = Path(r"../RandomPick_v6_Train_Patched")  # ⚠️ 改這裡
 SAVE_DIR = Path("runs_patch_{size}")
-MODEL_ARCH = "yolov11n.pt"  
+MODEL_ARCH = "yolo11n.pt"  
 EPOCHS = 12
 BATCH_SIZE = 16
 DEVICE = 0  # 改成 'cpu' 或指定 GPU 編號
