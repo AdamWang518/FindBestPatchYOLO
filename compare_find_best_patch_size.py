@@ -193,25 +193,28 @@ if __name__ == "__main__":
 
     # ➕ 畫圖
     def plot_metric(metric_dict, title, fname):
-        labels = [str(k) for k in metric_dict.keys()]  # patch size 轉字串當作 x 軸類別
+        labels = [str(k) for k in metric_dict.keys()]
         values = list(metric_dict.values())
 
         plt.figure(figsize=(8, 5))
         bars = plt.bar(labels, values, alpha=0.7)
 
-        # 每個 bar 上標數值
+        # 每個 bar 上標數值（字體放大）
         for bar in bars:
             height = bar.get_height()
             plt.text(bar.get_x() + bar.get_width() / 2, height,
-                    f"{height:.3f}", ha='center', va='bottom', fontsize=9)
+                    f"{height:.3f}", ha='center', va='bottom', fontsize=18)
 
-        plt.title(title)
-        plt.xlabel("Patch Size")
-        plt.ylabel(title)
+        plt.title(title, fontsize=20)
+        plt.xlabel("Patch Size", fontsize=18)
+        plt.ylabel(title, fontsize=18)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
         plt.grid(True, axis="y", ls="--", alpha=0.4)
         plt.tight_layout()
         plt.savefig(WORK_DIR / fname)
         plt.close()
+
 
 
     plot_metric(all_recall, "Average Recall", "recall_patch_sizes.png")
