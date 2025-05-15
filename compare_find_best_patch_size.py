@@ -193,8 +193,18 @@ if __name__ == "__main__":
 
     # ➕ 畫圖
     def plot_metric(metric_dict, title, fname):
-        plt.figure(figsize=(8,5))
-        plt.bar(metric_dict.keys(), metric_dict.values(), alpha=0.7)
+        labels = [str(k) for k in metric_dict.keys()]  # patch size 轉字串當作 x 軸類別
+        values = list(metric_dict.values())
+
+        plt.figure(figsize=(8, 5))
+        bars = plt.bar(labels, values, alpha=0.7)
+
+        # 每個 bar 上標數值
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(bar.get_x() + bar.get_width() / 2, height,
+                    f"{height:.3f}", ha='center', va='bottom', fontsize=9)
+
         plt.title(title)
         plt.xlabel("Patch Size")
         plt.ylabel(title)
@@ -202,6 +212,7 @@ if __name__ == "__main__":
         plt.tight_layout()
         plt.savefig(WORK_DIR / fname)
         plt.close()
+
 
     plot_metric(all_recall, "Average Recall", "recall_patch_sizes.png")
     plot_metric(all_prec,   "Average Precision", "precision_patch_sizes.png")
