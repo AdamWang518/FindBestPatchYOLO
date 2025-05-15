@@ -8,6 +8,7 @@ from torchvision.ops import nms
 import torch
 import cv2
 import matplotlib.pyplot as plt
+import gc  # 為了釋放 GPU 資源
 
 # ───────────── 設定區 ─────────────
 PATCH_SIZES = [320, 480, 640, 800, 960]
@@ -174,6 +175,11 @@ if __name__ == "__main__":
         all_f1[size]     = sum(f1)     / len(CLASS_NAMES)
         all_time[size]   = infer_time
         all_mem[size]    = max_mem
+
+        # ✅ 加入這段來清理 GPU 資源
+        del model
+        torch.cuda.empty_cache()
+        gc.collect()
 
     csv_path = WORK_DIR / "compare_patch_sizes.csv"
     with open(csv_path, "w") as f:
