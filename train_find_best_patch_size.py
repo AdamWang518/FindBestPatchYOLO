@@ -52,7 +52,6 @@ names:
         device=DEVICE,
         amp=False,       # ❗關閉混合精度避免 NaN
         lr0=0.002,       # ❗調降初始學習率
-        clip=1.0,        # ❗啟用 gradient clipping
         project=str(save_dir),
         name="exp_patch",
         exist_ok=True
