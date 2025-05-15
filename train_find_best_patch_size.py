@@ -1,10 +1,12 @@
 import os
+import gc
+import torch
 from ultralytics import YOLO
 from pathlib import Path
 
-# ✅ 設定參數區
 # PATCH_SIZES = [320, 480, 640, 800, 960]
-PATCH_SIZES = [ 480, 640, 800, 960]
+# ✅ 設定參數區
+PATCH_SIZES = [480, 640, 800, 960]
 ROOT_DIR = Path("../RandomPick_v6_Train_Patched")
 SAVE_DIR = Path("runs_patch_{size}")
 MODEL_ARCH = "yolo11n.pt"
@@ -57,5 +59,10 @@ names:
         name="exp_patch",
         exist_ok=True
     )
+
+    # ✅ 訓練後釋放資源
+    del model
+    torch.cuda.empty_cache()
+    gc.collect()
 
 print("✅ 所有 patch size 訓練已完成。")
