@@ -122,7 +122,9 @@ def infer_patch(model, img_dir, out_dir, crop_size):
                 x0, y0 = c * crop_size, r * crop_size
                 x1, y1 = min(x0 + crop_size, w), min(y0 + crop_size, h)
                 patch = img[y0:y1, x0:x1]
-                for res in model(patch, verbose=False):
+
+                # ✅ 指定輸入尺寸
+                for res in model(patch, verbose=False, imgsz=(crop_size, crop_size)):
                     for b in res.boxes:
                         if b.conf.item() < CONF_THRES: continue
                         cls = int(b.cls)
@@ -134,7 +136,7 @@ def infer_patch(model, img_dir, out_dir, crop_size):
             mem = torch.cuda.max_memory_allocated() / 1024**2
             max_mem = max(max_mem, mem)
 
-                # ── 每類別 NMS ──
+        # ── 每類別 NMS ──
         nms_boxes = []
         for cls in set(b[0] for b in all_boxes):
             cls_boxes = [b for b in all_boxes if b[0] == cls]
@@ -144,7 +146,7 @@ def infer_patch(model, img_dir, out_dir, crop_size):
             keep  = nms(xyxy, confs, IOU_THRES)
             nms_boxes.extend([cls_boxes[i] for i in keep])
 
-        # ✅ 重新啟用「跨 patch 邊界合併」── 關鍵 2 行
+        # ✅ 跨 patch 邊界合併
         merged = merge_boxes_across_patches(nms_boxes, crop_size, crop_size, w, h)
         final  = [[b[0], b[1]/w, b[2]/h, b[3]/w, b[4]/h] for b in merged]
 
@@ -153,8 +155,8 @@ def infer_patch(model, img_dir, out_dir, crop_size):
                       for c, x, y, bw, bh in final)
         )
 
-
     return total_time, max_mem, files
+
 
 
 
