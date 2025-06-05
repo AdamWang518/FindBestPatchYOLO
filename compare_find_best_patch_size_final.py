@@ -14,7 +14,7 @@ import gc
 PATCH_SIZES = [320, 480, 640, 800]  # 不再使用 960
 VAL_IMG_DIR = Path("../RandomPick_v6_Train_Patched/original_val/images")
 VAL_LBL_DIR = Path("../RandomPick_v6_Train_Patched/original_val/labels")
-WORK_DIR    = Path("./CompareResults")
+WORK_DIR    = Path("./CompareResultsFinal")
 CLASS_NAMES = ['ship', 'aquaculture cage', 'buoy']
 CONF_THRES, IOU_THRES = 0.5, 0.5
 # ────────────────────────────────
